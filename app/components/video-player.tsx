@@ -1,20 +1,35 @@
 "use client"
 
-import { forwardRef, useState, useEffect } from "react"
+import { forwardRef, useState, useEffect, useRef } from "react"
 import Image from "next/image"
 
 interface VideoPlayerProps {
   isPlaying: boolean
+  currentVideo: number
+  onVideoSwitch: (index: number) => void
 }
 
-const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ isPlaying }, ref) => {
+const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ isPlaying, currentVideo, onVideoSwitch }, ref) => {
   const [animationClass, setAnimationClass] = useState("")
   const [showVideo, setShowVideo] = useState(false)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  
+  // Refs for all video elements
+  const video1Ref = useRef<HTMLVideoElement>(null)
+  const video2Ref = useRef<HTMLVideoElement>(null)
+  const video3Ref = useRef<HTMLVideoElement>(null)
+  
+  const videos = [
+    "/videos/endless3_compressed.mp4",
+    "/videos/endless169_compress.mp4",
+    "/videos/endless2_newcompressed.mp4"
+  ]
+  
+  const videoRefs = [video1Ref, video2Ref, video3Ref]
 
   useEffect(() => {
     if (isPlaying) {
       setAnimationClass("animate-pulse-ultra-slow")
-      // Show video after image animations start
       setTimeout(() => setShowVideo(true), 1000)
     } else {
       setAnimationClass("")
@@ -22,20 +37,40 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ isPlaying 
     }
   }, [isPlaying])
 
-  // Control video playback
+  // Preload next video for smooth switching
   useEffect(() => {
-    if (ref && 'current' in ref && ref.current) {
-      if (isPlaying) {
-        ref.current.play()
+    const nextVideoIndex = (currentVideo + 1) % videos.length
+    const nextVideoRef = videoRefs[nextVideoIndex]
+    
+    if (nextVideoRef.current) {
+      nextVideoRef.current.load() // Preload next video
+    }
+  }, [currentVideo])
+
+  // Control video playback for current video
+  useEffect(() => {
+    const currentVideoRef = videoRefs[currentVideo]
+    
+    if (currentVideoRef.current) {
+      if (isPlaying && showVideo) {
+        currentVideoRef.current.play()
       } else {
-        ref.current.pause()
+        currentVideoRef.current.pause()
       }
     }
-  }, [isPlaying, ref])
+    
+    // Pause other videos
+    videoRefs.forEach((videoRef, index) => {
+      if (index !== currentVideo && videoRef.current) {
+        videoRef.current.pause()
+      }
+    })
+  }, [isPlaying, showVideo, currentVideo])
+
 
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden">
-      {/* Main Background Image - fades out when video starts */}
+      {/* Main Background Image */}
       <div className={`absolute inset-0 transition-all duration-2000 ${animationClass} ${
         showVideo ? "opacity-0" : "opacity-100"
       }`}>
@@ -49,30 +84,31 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ isPlaying 
         />
       </div>
 
-      {/* Video Element - fades in */}
-      <video 
-        ref={ref} 
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-2000 ${
-          showVideo ? "opacity-100" : "opacity-0"
-        }`}
-        loop 
-        muted 
-        playsInline 
-        preload="auto"
-      >
-        <source src="/videos/endless169_compress.mp4" type="video/mp4" />
-      </video>
+      {/* Video Elements - All three videos */}
+      {videos.map((videoSrc, index) => (
+        <video 
+          key={index}
+          ref={videoRefs[index]}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+            showVideo && currentVideo === index && !isTransitioning ? "opacity-100" : "opacity-0"
+          }`}
+          loop 
+          muted 
+          playsInline 
+          preload={index === 0 ? "auto" : "metadata"} // Preload first video fully
+        >
+          <source src={videoSrc} type="video/mp4" />
+        </video>
+      ))}
 
-      {/* Animated Overlay Effects - on top of video */}
+      {/* Existing overlay effects */}
       <div className="absolute inset-0">
-        {/* Breathing Light Effect */}
         <div
           className={`absolute inset-0 bg-gradient-to-br from-blue-400/10 via-transparent to-green-400/10 transition-opacity duration-2000 ${
             isPlaying ? "opacity-100 animate-pulse-ultra-slow" : "opacity-0"
           }`}
         />
 
-        {/* Floating Particles */}
         {isPlaying && (
           <>
             <div
@@ -90,7 +126,6 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ isPlaying 
           </>
         )}
 
-        {/* Subtle Movement Simulation */}
         <div
           className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform transition-transform duration-8000 ${
             isPlaying ? "translate-x-full" : "-translate-x-full"
@@ -105,5 +140,4 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ isPlaying 
 })
 
 VideoPlayer.displayName = "VideoPlayer"
-
 export default VideoPlayer

@@ -1,6 +1,7 @@
 "use client"
 
-import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward } from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Monitor } from "lucide-react"
+import { Video } from "lucide-react"
 
 interface ControlPanelProps {
   isPlaying: boolean
@@ -9,11 +10,14 @@ interface ControlPanelProps {
   showControls: boolean
   currentTrack: number
   totalTracks: number
+  currentVideo: number
+  totalVideos: number
   onPlayPause: () => void
   onMute: () => void
   onVolumeChange: (volume: number) => void
   onPreviousTrack: () => void
   onNextTrack: () => void
+  onVideoSwitch: () => void
 }
 
 export default function ControlPanel({
@@ -23,11 +27,14 @@ export default function ControlPanel({
   showControls,
   currentTrack,
   totalTracks,
+  currentVideo,
+  totalVideos,
   onPlayPause,
   onMute,
   onVolumeChange,
   onPreviousTrack,
   onNextTrack,
+  onVideoSwitch,
 }: ControlPanelProps) {
   return (
     <>
@@ -97,6 +104,15 @@ export default function ControlPanel({
             <SkipForward size={20} />
           </button>
 
+          {/* Video Switch Button */}
+          <button 
+            onClick={onVideoSwitch}
+            className="p-2 text-white/70 hover:text-white transition-colors duration-300"
+            title={`Switch Video (${currentVideo + 1}/${totalVideos})`}
+          >
+            <Video size={20} />
+          </button>
+
           {/* Volume Control */}
           <div className="flex items-center space-x-3">
             <button onClick={onMute} className="p-2 text-white/70 hover:text-white transition-colors duration-300">
@@ -117,15 +133,21 @@ export default function ControlPanel({
           </div>
         </div>
 
-        {/* Status Indicator with Track Info */}
-        <div className="flex justify-center items-center mt-4 space-x-4">
-          <div
-            className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-              isPlaying ? "bg-green-400" : "bg-white/40"
-            }`}
-          />
+        {/* Status Indicator with Track and Video Info */}
+        <div className="flex justify-center items-center mt-4 space-x-6">
+          <div className="flex items-center space-x-2">
+            <div
+              className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                isPlaying ? "bg-green-400" : "bg-white/40"
+              }`}
+            />
+            <div className="text-xs text-white/60 font-light">
+              Track {currentTrack + 1} of {totalTracks}
+            </div>
+          </div>
+          
           <div className="text-xs text-white/60 font-light">
-            Track {currentTrack + 1} of {totalTracks}
+            Video {currentVideo + 1} of {totalVideos}
           </div>
         </div>
       </div>

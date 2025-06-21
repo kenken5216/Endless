@@ -43,7 +43,13 @@ export default function HomePage() {
     "/audio/Midnight_Reverie4.mp3",
     "/audio/Wandering_Mind2.mp3",
   ]
+  const [currentVideo, setCurrentVideo] = useState(0)
+  const totalVideos = 3
   
+  const handleVideoSwitch = () => {
+    setCurrentVideo((prev) => (prev + 1) % totalVideos)
+  }
+
   const handlePreviousTrack = () => {
   setCurrentTrack((prev) => prev > 0 ? prev - 1 : tracks.length - 1)
 }
@@ -164,7 +170,12 @@ export default function HomePage() {
       onMouseLeave={() => hasEntered && setShowControls(false)}
     >
       {/* Background Video/Image */}
-      <VideoPlayer ref={videoRef} isPlaying={isPlaying} />
+      <VideoPlayer 
+        ref={videoRef} 
+        isPlaying={isPlaying} 
+        currentVideo={currentVideo}
+        onVideoSwitch={setCurrentVideo}
+      />
 
       {/* Background Audio */}
       <AudioPlayer 
@@ -218,6 +229,9 @@ export default function HomePage() {
           onVolumeChange={setVolume}
           onPreviousTrack={handlePreviousTrack}
           onNextTrack={handleNextTrack}
+          totalVideos={totalVideos}
+          onVideoSwitch={handleVideoSwitch}
+          currentVideo={currentVideo}
         />
       )}
 
