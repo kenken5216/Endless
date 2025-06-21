@@ -33,8 +33,14 @@ export default function HomePage() {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [currentTrack, setCurrentTrack] = useState(0)
   const tracks = [
-    "/audio/Midnight_Reverie.mp3",
-    "/audio/Drifting_Away.mp3", 
+    "/audio/Midnight_Reverie1.mp3",
+    "/audio/Drifting_Away1.mp3", 
+    "/audio/Drifting_Away2.mp3",
+    "/audio/Midnight_Reverie2.mp3",
+    "/audio/Midnight_Reverie3.mp3",
+    "/audio/Wandering_Mind1.mp3",
+    "/audio/Midnight_Reverie4.mp3",
+    "/audio/Wandering_Mind2.mp3",
   ]
   
   const handlePreviousTrack = () => {
