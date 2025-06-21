@@ -25,3 +25,9 @@ out/
 # OS
 .DS_Store
 Thumbs.dbpnpm-lock.yaml
+
+# Yarn
+.yarn/*
+!.yarn/releases
+!.yarn/releases/yarn-1.22.22.cjs.next/
+.next/
