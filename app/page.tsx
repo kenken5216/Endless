@@ -32,6 +32,7 @@ export default function HomePage() {
   const [hasEntered, setHasEntered] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [currentTrack, setCurrentTrack] = useState(0)
+  const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null)
   const tracks = [
     "/audio/Midnight_Reverie1.mp3",
     "/audio/Drifting_Away1.mp3", 
@@ -54,11 +55,15 @@ export default function HomePage() {
   const handleEnterExperience = () => {
     setIsTransitioning(true)
 
-    // Start the transition sequence
     setTimeout(() => {
       setHasEntered(true)
+      setShowControls(true) // Show immediately
       handlePlay()
-    }, 1800) // Allow time for multi-layer blur animation
+      
+      // Auto-hide after 4 seconds
+      const timeout = setTimeout(() => setShowControls(false), 4000)
+      setHideTimeout(timeout)
+    }, 1800)
   }
 
   // Keyboard shortcuts (only active after entering)
@@ -88,6 +93,34 @@ export default function HomePage() {
     window.addEventListener("keydown", handleKeyPress)
     return () => window.removeEventListener("keydown", handleKeyPress)
   }, [hasEntered])
+
+  // Mouse movement detection
+  useEffect(() => {
+    if (!hasEntered) return
+
+    const handleMouseMove = () => {
+      // Clear existing timeout
+      if (hideTimeout) {
+        clearTimeout(hideTimeout)
+      }
+
+      // Show controls
+      setShowControls(true)
+      
+      // Set new auto-hide timeout
+      const timeout = setTimeout(() => setShowControls(false), 3000)
+      setHideTimeout(timeout)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      if (hideTimeout) {
+        clearTimeout(hideTimeout)
+      }
+    }
+  }, [hasEntered, hideTimeout])
 
   const handlePlay = () => {
     safePlay(videoRef.current)
