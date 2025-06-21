@@ -84,9 +84,7 @@ export default function Navigation({ isMenuOpen, setIsMenuOpen, showControls }: 
               style={{ transitionDelay: "600ms" }}
             >
               <div className="h-px w-16 bg-white/20 mx-auto"></div>
-              <p className="text-xs text-white/40 font-light tracking-wider uppercase mt-4">
-                github
-              </p>
+              <a href="https://github.com/kenken5216/Endless" target="_blank" rel="noopener noreferrer" className="text-xs text-white/40 font-light tracking-wider uppercase">Github</a>
               <p className="text-xs text-white/40 font-light tracking-wider uppercase">
                 last update: 21/06/2025
               </p>
