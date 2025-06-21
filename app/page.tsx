@@ -1,0 +1,189 @@
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import VideoPlayer from "./components/video-player"
+import AudioPlayer from "./components/audio-player"
+import AudioVisualizer from "./components/audio-visualizer"
+import AmbientEffects from "./components/ambient-effects"
+import ControlPanel from "./components/control-panel"
+import Navigation from "./components/navigation"
+import HeroSection from "./components/hero-section"
+
+// play() can throw AbortError if interrupted – wrap & swallow that promise.
+const safePlay = (el: HTMLMediaElement | null) => {
+  if (!el) return
+  if (!el.paused) return // already playing
+  const promise = el.play()
+  if (promise !== undefined) {
+    promise.catch(() => {
+      /* ignore AbortError or any autoplay blocking */
+    })
+  }
+}
+
+export default function HomePage() {
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isMuted, setIsMuted] = useState(false)
+  const [volume, setVolume] = useState(0.7)
+  const [showControls, setShowControls] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [hasEntered, setHasEntered] = useState(false)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [currentTrack, setCurrentTrack] = useState(0)
+  const tracks = [
+    "/audio/Midnight_Reverie.mp3",
+    "/audio/Drifting_Away.mp3", 
+  ]
+  
+  const handlePreviousTrack = () => {
+  setCurrentTrack((prev) => prev > 0 ? prev - 1 : tracks.length - 1)
+}
+
+  const handleNextTrack = () => {
+    setCurrentTrack((prev) => (prev + 1) % tracks.length)
+  }
+
+  const handleEnterExperience = () => {
+    setIsTransitioning(true)
+
+    // Start the transition sequence
+    setTimeout(() => {
+      setHasEntered(true)
+      handlePlay()
+    }, 1800) // Allow time for multi-layer blur animation
+  }
+
+  // Keyboard shortcuts (only active after entering)
+  useEffect(() => {
+    if (!hasEntered) return
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      switch (e.code) {
+        case "Space":
+          e.preventDefault()
+          handlePlayPause()
+          break
+        case "ArrowUp":
+          e.preventDefault()
+          setVolume((prev) => Math.min(1, prev + 0.1))
+          break
+        case "ArrowDown":
+          e.preventDefault()
+          setVolume((prev) => Math.max(0, prev - 0.1))
+          break
+        case "KeyM":
+          handleMute()
+          break
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyPress)
+    return () => window.removeEventListener("keydown", handleKeyPress)
+  }, [hasEntered])
+
+  const handlePlay = () => {
+    safePlay(videoRef.current)
+    safePlay(audioRef.current)
+    setIsPlaying(true)
+  }
+
+  const handlePause = () => {
+    if (videoRef.current && !videoRef.current.paused) videoRef.current.pause()
+    if (audioRef.current && !audioRef.current.paused) audioRef.current.pause()
+    setIsPlaying(false)
+  }
+
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      handlePause()
+    } else {
+      handlePlay()
+    }
+  }
+
+  const handleMute = () => {
+    setIsMuted(!isMuted)
+    if (audioRef.current) {
+      audioRef.current.muted = !isMuted
+    }
+  }
+
+  const handleVolumeChange = (newVolume: number) => {
+    setVolume(newVolume)
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume
+    }
+  }
+
+  return (
+    <div
+      className="relative h-screen w-full overflow-hidden bg-black"
+      onClick={hasEntered ? handlePlayPause : undefined}
+      onMouseEnter={() => hasEntered && setShowControls(true)}
+      onMouseLeave={() => hasEntered && setShowControls(false)}
+    >
+      {/* Background Video/Image */}
+      <VideoPlayer ref={videoRef} isPlaying={isPlaying} />
+
+      {/* Background Audio */}
+      <AudioPlayer 
+        ref={audioRef} 
+        volume={volume} 
+        isMuted={isMuted}
+        isPlaying={isPlaying}
+        currentTrack={tracks[currentTrack]}
+        onTrackEnd={() => setCurrentTrack((prev) => (prev + 1) % tracks.length)}
+      />
+
+      {/* Blur System */}
+      <div
+        className="absolute inset-0 transition-all duration-1800 ease-out"
+        style={{
+          backdropFilter: isTransitioning ? 'blur(0px)' : 'blur(12px)',
+          background: isTransitioning 
+            ? 'transparent' 
+            : 'radial-gradient(circle at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 100%)',
+          opacity: isTransitioning ? 0 : 1,
+        }}
+      />
+
+      {/* Ambient Effects */}
+      <AmbientEffects isPlaying={isPlaying} />
+
+      {/* Audio Visualizer */}
+      {hasEntered && <AudioVisualizer isPlaying={isPlaying} volume={volume} />}
+
+
+      {/* Hero Section with integrated button */}
+      <HeroSection 
+        hasEntered={hasEntered}
+        isTransitioning={isTransitioning}
+        handleEnterExperience={handleEnterExperience}
+      />
+      {/* Navigation */}
+      {hasEntered && <Navigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} showControls={showControls} />}
+
+      {/* Control Panel */}
+      {hasEntered && (
+        <ControlPanel
+          isPlaying={isPlaying}
+          isMuted={isMuted}
+          volume={volume}
+          showControls={showControls}
+          currentTrack={currentTrack}
+          totalTracks={tracks.length}
+          onPlayPause={handlePlayPause}
+          onMute={handleMute}
+          onVolumeChange={setVolume}
+          onPreviousTrack={handlePreviousTrack}
+          onNextTrack={handleNextTrack}
+        />
+      )}
+
+      {/* Main Ambient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50 pointer-events-none" />
+    </div>
+  )
+}
