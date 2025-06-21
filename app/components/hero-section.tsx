@@ -1,6 +1,12 @@
 "use client"
 
-export default function HeroSection({ hasEntered, isTransitioning, handleEnterExperience }) {
+interface HeroSectionProps {
+  hasEntered: boolean;
+  isTransitioning: boolean;
+  handleEnterExperience: () => void;
+}
+
+export default function HeroSection({ hasEntered, isTransitioning, handleEnterExperience }: HeroSectionProps) {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <div className="text-center space-y-12">
