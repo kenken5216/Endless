@@ -9,7 +9,7 @@ import ControlPanel from "./components/control-panel"
 import Navigation from "./components/navigation"
 import HeroSection from "./components/hero-section"
 
-// play() can throw AbortError if interrupted – wrap & swallow that promise.
+// play() can throw AbortError if interrupted -- wrap & swallow that promise.
 const safePlay = (el: HTMLMediaElement | null) => {
   if (!el) return
   if (!el.paused) return // already playing
@@ -19,6 +19,16 @@ const safePlay = (el: HTMLMediaElement | null) => {
       /* ignore AbortError or any autoplay blocking */
     })
   }
+}
+
+// Fisher-Yates shuffle algorithm
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
 }
 
 export default function HomePage() {
@@ -33,6 +43,9 @@ export default function HomePage() {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [currentTrack, setCurrentTrack] = useState(0)
   const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null)
+  const [isShuffled, setIsShuffled] = useState(false)
+  const [shuffledPlaylist, setShuffledPlaylist] = useState<number[]>([])
+  
   const tracks = [
     "/audio/Midnight_Reverie1.mp3",
     "/audio/Drifting_Away1.mp3", 
@@ -42,20 +55,73 @@ export default function HomePage() {
     "/audio/Wandering_Mind1.mp3",
     "/audio/Midnight_Reverie4.mp3",
     "/audio/Wandering_Mind2.mp3",
+    "/audio/Drift_Away5.mp3",
+    "/audio/Drifting_Away4.mp3",
+    "/audio/Echoes_of_the_Void1.mp3",
+    "/audio/Echoes_of_the_Void2.mp3",
+    "/audio/Drifting_Away3.mp3",
+    "/audio/Waves_of_Silence1.mp3",
+    "/audio/Waves_of_Silence2.mp3",
   ]
+  
   const [currentVideo, setCurrentVideo] = useState(0)
   const totalVideos = 3
+
+  // Initialize shuffled playlist
+  useEffect(() => {
+    const indices = Array.from({ length: tracks.length }, (_, i) => i)
+    setShuffledPlaylist(shuffleArray(indices))
+  }, [tracks.length])
+
+  const getCurrentPlaylistIndex = () => {
+    if (!isShuffled) return currentTrack
+    return shuffledPlaylist.findIndex(index => index === currentTrack)
+  }
+
+  const getTrackFromPlaylist = (playlistIndex: number) => {
+    if (!isShuffled) return playlistIndex
+    return shuffledPlaylist[playlistIndex] || 0
+  }
   
   const handleVideoSwitch = () => {
     setCurrentVideo((prev) => (prev + 1) % totalVideos)
   }
 
+  const handleShuffle = () => {
+    if (!isShuffled) {
+      // Enable shuffle
+      const indices = Array.from({ length: tracks.length }, (_, i) => i)
+      const newShuffledPlaylist = shuffleArray(indices)
+      setShuffledPlaylist(newShuffledPlaylist)
+      setIsShuffled(true)
+    } else {
+      // Disable shuffle
+      setIsShuffled(false)
+    }
+  }
+
   const handlePreviousTrack = () => {
-  setCurrentTrack((prev) => prev > 0 ? prev - 1 : tracks.length - 1)
-}
+    if (isShuffled) {
+      const currentPlaylistIndex = getCurrentPlaylistIndex()
+      const newPlaylistIndex = currentPlaylistIndex > 0 ? currentPlaylistIndex - 1 : shuffledPlaylist.length - 1
+      setCurrentTrack(getTrackFromPlaylist(newPlaylistIndex))
+    } else {
+      setCurrentTrack((prev) => prev > 0 ? prev - 1 : tracks.length - 1)
+    }
+  }
 
   const handleNextTrack = () => {
-    setCurrentTrack((prev) => (prev + 1) % tracks.length)
+    if (isShuffled) {
+      const currentPlaylistIndex = getCurrentPlaylistIndex()
+      const newPlaylistIndex = (currentPlaylistIndex + 1) % shuffledPlaylist.length
+      setCurrentTrack(getTrackFromPlaylist(newPlaylistIndex))
+    } else {
+      setCurrentTrack((prev) => (prev + 1) % tracks.length)
+    }
+  }
+
+  const handleTrackEnd = () => {
+    handleNextTrack()
   }
 
   const handleEnterExperience = () => {
@@ -90,8 +156,19 @@ export default function HomePage() {
           e.preventDefault()
           setVolume((prev) => Math.max(0, prev - 0.1))
           break
+        case "ArrowLeft":
+          e.preventDefault()
+          handlePreviousTrack()
+          break
+        case "ArrowRight":
+          e.preventDefault()
+          handleNextTrack()
+          break
         case "KeyM":
           handleMute()
+          break
+        case "KeyS":
+          handleShuffle()
           break
       }
     }
@@ -184,7 +261,7 @@ export default function HomePage() {
         isMuted={isMuted}
         isPlaying={isPlaying}
         currentTrack={tracks[currentTrack]}
-        onTrackEnd={() => setCurrentTrack((prev) => (prev + 1) % tracks.length)}
+        onTrackEnd={handleTrackEnd}
       />
 
       {/* Blur System */}
@@ -205,13 +282,13 @@ export default function HomePage() {
       {/* Audio Visualizer */}
       {hasEntered && <AudioVisualizer isPlaying={isPlaying} volume={volume} />}
 
-
       {/* Hero Section with integrated button */}
       <HeroSection 
         hasEntered={hasEntered}
         isTransitioning={isTransitioning}
         handleEnterExperience={handleEnterExperience}
       />
+      
       {/* Navigation */}
       {hasEntered && <Navigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} showControls={showControls} />}
 
@@ -224,11 +301,13 @@ export default function HomePage() {
           showControls={showControls}
           currentTrack={currentTrack}
           totalTracks={tracks.length}
+          isShuffled={isShuffled}
           onPlayPause={handlePlayPause}
           onMute={handleMute}
           onVolumeChange={setVolume}
           onPreviousTrack={handlePreviousTrack}
           onNextTrack={handleNextTrack}
+          onShuffle={handleShuffle}
           totalVideos={totalVideos}
           onVideoSwitch={handleVideoSwitch}
           currentVideo={currentVideo}

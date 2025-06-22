@@ -79,7 +79,6 @@ const AudioPlayer = forwardRef<HTMLAudioElement, AudioPlayerProps>(
         
         const handlePlay = () => setIsStarting(true)
         const handleEnded = () => {
-          // Ensure we move to next track when current ends
           console.log("Track ended, moving to next...")
           onTrackEnd()
         }

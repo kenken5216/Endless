@@ -1,7 +1,6 @@
 "use client"
 
-import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Monitor } from "lucide-react"
-import { Video } from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Shuffle, Video } from "lucide-react"
 
 interface ControlPanelProps {
   isPlaying: boolean
@@ -12,11 +11,13 @@ interface ControlPanelProps {
   totalTracks: number
   currentVideo: number
   totalVideos: number
+  isShuffled: boolean
   onPlayPause: () => void
   onMute: () => void
   onVolumeChange: (volume: number) => void
   onPreviousTrack: () => void
   onNextTrack: () => void
+  onShuffle: () => void
   onVideoSwitch: () => void
 }
 
@@ -29,11 +30,13 @@ export default function ControlPanel({
   totalTracks,
   currentVideo,
   totalVideos,
+  isShuffled,
   onPlayPause,
   onMute,
   onVolumeChange,
   onPreviousTrack,
   onNextTrack,
+  onShuffle,
   onVideoSwitch,
 }: ControlPanelProps) {
   return (
@@ -78,6 +81,19 @@ export default function ControlPanel({
       >
         {/* Main Control Panel */}
         <div className="flex items-center space-x-6 px-8 py-4 rounded-full backdrop-blur-md bg-white/10 border border-white/20">
+          {/* Shuffle Button */}
+          <button 
+            onClick={onShuffle}
+            className={`p-2 transition-all duration-300 ${
+              isShuffled 
+                ? "text-green-400 hover:text-green-300" 
+                : "text-white/70 hover:text-white"
+            }`}
+            title={isShuffled ? "Disable Shuffle (S)" : "Enable Shuffle (S)"}
+          >
+            <Shuffle size={20} />
+          </button>
+
           {/* Previous Button */}
           <button 
             onClick={onPreviousTrack}
@@ -142,7 +158,7 @@ export default function ControlPanel({
               }`}
             />
             <div className="text-xs text-white/60 font-light">
-              Track {currentTrack + 1} of {totalTracks}
+              Track {currentTrack + 1} of {totalTracks} {isShuffled && "• Shuffled"}
             </div>
           </div>
           
